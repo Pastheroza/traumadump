@@ -4,6 +4,8 @@ A private place to write about what happened to you, and get support from people
 
 **Live:** https://traumadump.vercel.app
 
+<img src="public/qr.svg" width="160" alt="QR code that opens traumadump.vercel.app">
+
 ## Features
 
 - **Dump** — post about a trauma. Posts are private: only people you allow can see them.

@@ -134,7 +134,17 @@
   .promises { padding: 112px var(--gutter); border-top: 1px solid var(--rule); }
   .promises ul { margin: 0; padding: 0; list-style: none; font: 300 clamp(40px, 7vw, 92px)/1.02 var(--serif); letter-spacing: -.04em; }
   .promises li:nth-child(even) { font-style: italic; color: var(--ink-3); }
-  .site-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px 48px; padding: 40px var(--gutter) 56px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
+  .share { display: none; grid-template-columns: auto 1fr; align-items: center; gap: clamp(32px, 6vw, 80px); padding: 96px var(--gutter); border-top: 1px solid var(--rule); }
+  [data-view=auth] .share { display: grid; }
+  [data-view=help] .share { display: grid; max-width: 680px; margin: 0 auto 120px; padding: 56px clamp(20px, 4vw, 24px) 0; }
+  .qr { width: clamp(150px, 20vw, 220px); border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px var(--rule), 0 30px 60px -32px rgb(0 0 0 / .4); }
+  .qr img { display: block; width: 100%; height: auto; }
+  .share h2 { margin-bottom: 18px; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: -.035em; text-wrap: balance; }
+  [data-view=help] .share h2 { font-size: clamp(28px, 4vw, 36px); }
+  .share-url { display: inline-block; margin-top: 24px; font: 400 20px var(--serif); color: var(--ember); text-decoration: none; border-bottom: 1px solid currentColor; }
+  .site-foot { display: none; }
+  [data-view=auth] .site-foot { display: flex; }
+  .site-foot { flex-wrap: wrap; justify-content: space-between; gap: 24px 48px; padding: 40px var(--gutter) 56px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
   .site-foot p { margin: 0; max-width: 52ch; }
 
   /* Dump */
@@ -310,6 +320,8 @@
     .back { display: inline; }
     .msgs { max-height: none; min-height: 50vh; }
     .lines a { font-size: 22px; }
+    .share, [data-view=help] .share { grid-template-columns: 1fr; padding-block: 64px; }
+    [data-view=help] .share { margin-bottom: 140px; }
     .sol-head { gap: 22px; }
     .sol-face { width: 80px; height: 80px; }
     .sol-chat .msgs { max-height: none; min-height: 0; }
@@ -362,10 +374,6 @@
       <p class="overline">What we don’t do</p>
       <ul><li>No email.</li><li>No real names.</li><li>No public pages.</li><li>No likes. No ads.</li></ul>
     </div>
-    <footer class="site-foot">
-      <p>TraumaDump is peer support, not therapy. If you are in danger right now, call 988 in the US or your local emergency number.</p>
-      <p>Built for AI Workforce 2026</p>
-    </footer>
   </section>
 
   <section id="feed" hidden>
@@ -471,6 +479,21 @@
     <p class="hint">If you are in immediate danger, call your local emergency number.</p>
   </section>
 </main>
+
+<!-- Shown on the landing and Help pages -->
+<aside class="share" aria-labelledby="shareTitle">
+  <div class="qr"><img src="/qr.svg" alt="QR code that opens traumadump.vercel.app" width="220" height="220"></div>
+  <div>
+    <p class="overline">Pass it on</p>
+    <h2 id="shareTitle">Know someone carrying <em>something heavy</em>?</h2>
+    <p class="lede">Scan to open TraumaDump on a phone. You join with a Masky avatar, so you never have to use your real name.</p>
+    <a class="share-url" href="https://traumadump.vercel.app">traumadump.vercel.app</a>
+  </div>
+</aside>
+<footer class="site-foot">
+  <p>TraumaDump is peer support, not therapy. If you are in danger right now, call 988 in the US or your local emergency number.</p>
+  <p>Built for AI Workforce 2026</p>
+</footer>
 
 <dialog id="matched">
   <form method="dialog">
