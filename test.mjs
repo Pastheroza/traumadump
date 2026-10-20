@@ -3,26 +3,38 @@ import assert from 'node:assert/strict';
 import { neon } from '@neondatabase/serverless';
 import handler from './api/[route].js';
 
-const call = (method, route, body, cookie, query = {}) => new Promise(resolve => {
+const sql = neon(process.env.DATABASE_URL);
+
+const call = (method, route, body, sid, query = {}, cookies = {}) => new Promise(resolve => {
   const res = {
     setHeader(k, v) { this.cookie = v.split(';')[0]; },
     status(code) { this.code = code; return this; },
     json(data) { resolve({ code: this.code, data, cookie: this.cookie }); },
+    redirect(code, location) { this.writableEnded = true; resolve({ code, location, cookie: this.cookie }); },
   };
-  handler({ method, query: { route, ...query }, body, headers: { cookie } }, res);
+  handler({ method, query: { route, ...query }, body, headers: { host: 'localhost:3000' }, cookies: { sid, ...cookies } }, res);
 });
 
+// Masky's side of the login can't run here, so make users + sessions the way the callback does.
 const tag = Date.now().toString(36);
-const [a, b] = ['ta_' + tag, 'tb_' + tag];
+const [a, b] = ['test_a_' + tag, 'test_b_' + tag];
+async function signIn(sub) {
+  const [u] = await sql`insert into users (sub, name) values (${sub}, ${sub}) returning id`;
+  const sid = Math.random().toString(16).slice(2).padEnd(64, '0').slice(0, 64);
+  await sql`insert into sessions (token, user_id) values (${sid}, ${u.id})`;
+  return sid;
+}
 
 try {
   assert.equal((await call('GET', 'posts')).code, 401, 'posts need a session');
-  assert.equal((await call('POST', 'signup', { name: a, pass: 'short' })).code, 400);
-  const A = (await call('POST', 'signup', { name: a, pass: 'password-a' })).cookie;
-  const B = (await call('POST', 'signup', { name: b, pass: 'password-b' })).cookie;
-  assert.equal((await call('POST', 'signup', { name: a, pass: 'password-a' })).code, 409, 'duplicate name');
-  assert.equal((await call('POST', 'login', { name: a, pass: 'wrong-pass' })).code, 400);
-  assert.ok((await call('POST', 'login', { name: a.toUpperCase(), pass: 'password-a' })).cookie, 'login is case-insensitive');
+  const login = await call('GET', 'login');
+  assert.equal(login.code, 302);
+  assert.ok(login.location.startsWith('https://masky.ai/oauth-authorize.html?'), 'login goes to Masky');
+  const state = new URL(login.location).searchParams.get('state');
+  assert.equal(login.cookie, `state=${state}`);
+  assert.equal((await call('GET', 'callback', null, undefined, { state: 'forged', code: 'x' }, { state })).location, '/?error=login', 'state must match');
+
+  const A = await signIn(a), B = await signIn(b);
 
   // Dump + comments
   await call('POST', 'post', { body: 'my story' }, A);
@@ -55,5 +67,5 @@ try {
   assert.equal((await call('GET', 'me', null, A)).code, 401, 'logout ends the session');
   console.log('all checks passed');
 } finally {
-  await neon(process.env.DATABASE_URL)`delete from users where name in (${a}, ${b})`;
+  await sql`delete from users where sub in (${a}, ${b})`;
 }

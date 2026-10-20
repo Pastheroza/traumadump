@@ -1,10 +1,9 @@
-// The whole API: /api/<route>. Every route except signup/login needs a session cookie.
+// The whole API: /api/<route>. Every route except login/callback needs a session cookie.
 import { neon } from '@neondatabase/serverless';
-import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'node:util';
+import { randomBytes } from 'node:crypto';
 
 const sql = neon(process.env.DATABASE_URL);
-const hash = promisify(scrypt);
+const MASKY = 'https://masky.ai';
 
 export const TAGS = [
   'Grief & loss', 'Childhood abuse', 'Sexual assault', 'Domestic violence', 'Neglect',
@@ -34,28 +33,43 @@ async function startSession(res, userId) {
   res.setHeader('Set-Cookie', `sid=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`);
 }
 
-const profile = me => ({ name: me.name, tags: me.tags, bio: me.bio, allTags: TAGS });
+const profile = me => ({ name: me.name, picture: me.picture, tags: me.tags, bio: me.bio, allTags: TAGS });
+
+const callbackUrl = req => `${req.headers.host.startsWith('localhost') ? 'http' : 'https'}://${req.headers.host}/api/callback`;
+
+async function masky(path, init) {
+  const r = await fetch(MASKY + path, init);
+  if (!r.ok) throw new Error(`Masky ${path} answered ${r.status}`);
+  return r.json();
+}
 
 const routes = {
-  async 'POST signup'({ name, pass }, me, res) {
-    name = String(name ?? '').toLowerCase();
-    if (!/^[a-z0-9_]{3,20}$/.test(name)) throw fail(400, 'Username: 3-20 letters, numbers or _');
-    if (typeof pass !== 'string' || pass.length < 8) throw fail(400, 'Password: at least 8 characters');
-    const salt = randomBytes(16).toString('hex');
-    const key = (await hash(pass, salt, 64)).toString('hex');
-    const [user] = await sql`
-      insert into users (name, pass) values (${name}, ${salt + ':' + key})
-      on conflict (name) do nothing returning id`;
-    if (!user) throw fail(409, 'That username is taken');
-    await startSession(res, user.id);
+  // Login with Masky (OAuth 2.0): the avatar the user picks on masky.ai becomes their identity here.
+  'GET login'(body, me, res, req) {
+    const state = randomBytes(16).toString('hex');
+    res.setHeader('Set-Cookie', `state=${state}; Path=/api; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
+    res.redirect(302, `${MASKY}/oauth-authorize.html?` + new URLSearchParams({
+      client_id: process.env.MASKY_CLIENT_ID, redirect_uri: callbackUrl(req), scope: 'profile', state,
+    }));
   },
 
-  async 'POST login'({ name, pass }, me, res) {
-    const [user] = await sql`select id, pass from users where name = ${String(name ?? '').toLowerCase()}`;
-    const [salt, key] = (user?.pass ?? ':').split(':');
-    const ok = user && timingSafeEqual(Buffer.from(key, 'hex'), await hash(String(pass ?? ''), salt, 64));
-    if (!ok) throw fail(400, 'Wrong username or password');
+  async 'GET callback'(body, me, res, req) {
+    if (!req.query.state || req.query.state !== req.cookies.state) throw fail(400, 'Sign-in expired');
+    const { access_token } = await masky('/api/oauth/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'authorization_code', code: req.query.code, redirect_uri: callbackUrl(req),
+        client_id: process.env.MASKY_CLIENT_ID, client_secret: process.env.MASKY_CLIENT_SECRET,
+      }),
+    });
+    const info = await masky('/api/oauth/userinfo', { headers: { authorization: `Bearer ${access_token}` } });
+    const picture = String(info.picture ?? '').startsWith('https://') ? info.picture : '';
+    const [user] = await sql`
+      insert into users (sub, name, picture) values (${info.sub}, ${String(info.name ?? 'Anonymous').slice(0, 40)}, ${picture})
+      on conflict (sub) do update set name = excluded.name, picture = excluded.picture returning id`;
     await startSession(res, user.id);
+    res.redirect(302, '/');
   },
 
   async 'POST logout'(body, me, res, req) {
@@ -68,14 +82,14 @@ const routes = {
   async 'POST profile'({ tags, bio }, me) {
     tags = Array.isArray(tags) ? TAGS.filter(t => tags.includes(t)) : [];
     if (typeof bio !== 'string' || bio.length > 300) throw fail(400, 'Bio: up to 300 characters');
-    const [user] = await sql`update users set tags = ${tags}, bio = ${bio.trim()} where id = ${me.id} returning name, tags, bio`;
+    const [user] = await sql`update users set tags = ${tags}, bio = ${bio.trim()} where id = ${me.id} returning name, picture, tags, bio`;
     return profile(user);
   },
 
   // Dump: posts and supportive comments, visible to signed-in members only.
   'GET posts': (body, me) => sql`
-    select p.id, u.name, p.body, p.created, p.user_id = ${me.id} as mine,
-      coalesce((select json_agg(json_build_object('name', cu.name, 'body', c.body, 'created', c.created) order by c.id)
+    select p.id, u.name, u.picture, p.body, p.created, p.user_id = ${me.id} as mine,
+      coalesce((select json_agg(json_build_object('name', cu.name, 'picture', cu.picture, 'body', c.body, 'created', c.created) order by c.id)
         from comments c join users cu on cu.id = c.user_id where c.post_id = p.id), '[]') as comments
     from posts p join users u on u.id = p.user_id
     order by p.id desc limit 50`, // ponytail: newest 50 only, add paging when the feed outgrows it
@@ -96,7 +110,7 @@ const routes = {
   async 'GET next'(body, me) {
     const [person] = await sql`
       select * from (
-        select u.id, u.name, u.bio, array(select unnest(u.tags) intersect select unnest(m.tags)) as shared
+        select u.id, u.name, u.picture, u.bio, array(select unnest(u.tags) intersect select unnest(m.tags)) as shared
         from users u, users m
         where m.id = ${me.id} and u.id <> m.id and u.tags && m.tags
           and not exists (select 1 from swipes s where s.from_id = m.id and s.to_id = u.id)
@@ -113,7 +127,7 @@ const routes = {
   },
 
   'GET matches': (body, me) => sql`
-    select u.id, u.name, u.bio, u.tags from swipes a
+    select u.id, u.name, u.picture, u.bio, u.tags from swipes a
     join swipes b on b.from_id = a.to_id and b.to_id = a.from_id and b.liked
     join users u on u.id = a.to_id
     where a.from_id = ${me.id} and a.liked order by u.name`,
@@ -141,15 +155,16 @@ export default async function handler(req, res) {
   const route = routes[`${req.method} ${req.query.route}`];
   if (!route) return res.status(404).json({ error: 'Not found' });
   try {
-    req.token = /(?:^|;\s*)sid=([a-f0-9]{64})/.exec(req.headers.cookie ?? '')?.[1];
+    req.token = /^[a-f0-9]{64}$/.test(req.cookies.sid) ? req.cookies.sid : undefined;
     const [me] = req.token ? await sql`
-      select u.id, u.name, u.tags, u.bio from sessions s join users u on u.id = s.user_id
+      select u.id, u.name, u.picture, u.tags, u.bio from sessions s join users u on u.id = s.user_id
       where s.token = ${req.token} and s.created > now() - interval '30 days'` : [];
-    if (!me && !['signup', 'login'].includes(req.query.route)) throw fail(401, 'Please sign in');
+    if (!me && !['login', 'callback'].includes(req.query.route)) throw fail(401, 'Please sign in');
     const out = await route(req.body ?? {}, me, res, req);
-    res.status(200).json(out === undefined ? { ok: true } : out);
+    if (!res.writableEnded) res.status(200).json(out === undefined ? { ok: true } : out);
   } catch (e) {
     if (!e.status) console.error(e);
+    if (req.query.route === 'callback') return res.redirect(302, '/?error=login');
     res.status(e.status ?? 500).json({ error: e.status ? e.message : 'Something went wrong' });
   }
 }

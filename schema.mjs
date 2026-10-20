@@ -6,8 +6,9 @@ const sql = neon(process.env.DATABASE_URL);
 const schema = `
 create table if not exists users (
   id serial primary key,
-  name text unique not null,
-  pass text not null,
+  sub text unique not null, -- Masky's per-app pseudonym for the chosen avatar
+  name text not null,
+  picture text not null default '',
   tags text[] not null default '{}',
   bio text not null default '',
   created timestamptz not null default now()
