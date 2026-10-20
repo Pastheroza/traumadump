@@ -136,11 +136,12 @@
   .promises li:nth-child(even) { font-style: italic; color: var(--ink-3); }
   .share { display: none; grid-template-columns: auto 1fr; align-items: center; gap: clamp(32px, 6vw, 80px); padding: 96px var(--gutter); border-top: 1px solid var(--rule); }
   [data-view=auth] .share { display: grid; }
-  [data-view=help] .share { display: grid; max-width: 680px; margin: 0 auto 120px; padding: 56px clamp(20px, 4vw, 24px) 0; }
+  :is([data-view=help], [data-view=feed]) .share { display: grid; max-width: 680px; margin: 0 auto 120px; padding: 56px clamp(20px, 4vw, 24px) 0; }
   .qr { width: clamp(150px, 20vw, 220px); border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px var(--rule), 0 30px 60px -32px rgb(0 0 0 / .4); }
   .qr img { display: block; width: 100%; height: auto; }
   .share h2 { margin-bottom: 18px; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: -.035em; text-wrap: balance; }
-  [data-view=help] .share h2 { font-size: clamp(28px, 4vw, 36px); }
+  :is([data-view=help], [data-view=feed]) main { padding-bottom: 24px; }
+  :is([data-view=help], [data-view=feed]) .share h2 { font-size: clamp(28px, 4vw, 36px); }
   .share-url { display: inline-block; margin-top: 24px; font: 400 20px var(--serif); color: var(--ember); text-decoration: none; border-bottom: 1px solid currentColor; }
   .site-foot { display: none; }
   [data-view=auth] .site-foot { display: flex; }
@@ -320,8 +321,8 @@
     .back { display: inline; }
     .msgs { max-height: none; min-height: 50vh; }
     .lines a { font-size: 22px; }
-    .share, [data-view=help] .share { grid-template-columns: 1fr; padding-block: 64px; }
-    [data-view=help] .share { margin-bottom: 140px; }
+    .share, :is([data-view=help], [data-view=feed]) .share { grid-template-columns: 1fr; padding-block: 64px; }
+    :is([data-view=help], [data-view=feed]) .share { margin-bottom: 140px; }
     .sol-head { gap: 22px; }
     .sol-face { width: 80px; height: 80px; }
     .sol-chat .msgs { max-height: none; min-height: 0; }
@@ -480,7 +481,7 @@
   </section>
 </main>
 
-<!-- Shown on the landing and Help pages -->
+<!-- Shown on the landing, Dump and Help pages -->
 <aside class="share" aria-labelledby="shareTitle">
   <div class="qr"><img src="/qr.svg" alt="QR code that opens traumadump.vercel.app" width="220" height="220"></div>
   <div>
