@@ -13,6 +13,11 @@ create table if not exists users (
   bio text not null default '',
   created timestamptz not null default now()
 );
+alter table users
+  add column if not exists sol_conv text, -- Masky conversation with Sol
+  add column if not exists sol_slug text,
+  add column if not exists sol_day date,  -- daily message limit
+  add column if not exists sol_count int not null default 0;
 create table if not exists sessions (
   token text primary key,
   user_id int not null references users on delete cascade,

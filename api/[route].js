@@ -43,6 +43,22 @@ async function masky(path, init) {
   return r.json();
 }
 
+// Sol, the AI companion, is a Masky avatar (see companion.mjs). Replies are text-only on purpose:
+// Masky gives every voice/video turn a public share page, and these conversations must stay private.
+const sol = (path, body) => masky(path, {
+  method: body ? 'POST' : 'GET',
+  headers: { authorization: `Bearer ${process.env.MASKY_API_KEY}`, 'content-type': 'application/json' },
+  body: body && JSON.stringify(body),
+}).catch(e => {
+  console.error(e);
+  throw fail(502, 'Sol can’t answer right now. Please try again in a moment.');
+});
+
+const solContext = me => `[context] Their name here is ${me.name}. ${me.tags.length
+  ? `They chose to share that they have lived through: ${me.tags.join(', ')}.`
+  : 'They have not shared what they lived through yet.'}${me.bio ? ` In their words: "${me.bio}"` : ''
+} Greet them warmly by name, introduce yourself in one short line, and gently ask how they are doing today.`.slice(0, 500);
+
 const routes = {
   // Login with Masky (OAuth 2.0): the avatar the user picks on masky.ai becomes their identity here.
   'GET login'(body, me, res, req) {
@@ -149,6 +165,36 @@ const routes = {
     if (!await matched(me.id, id(to))) throw fail(403, 'You can only message your matches');
     await sql`insert into messages (from_id, to_id, body) values (${me.id}, ${id(to)}, ${text(body, 2000)})`;
   },
+
+  // Sol: one private Masky conversation per member. The first call opens it with the member's story as context.
+  async 'GET sol'(body, me) {
+    if (!me.sol_slug) return { started: false, messages: [] };
+    const { turns } = await sol(`/api/conversations/by-slug/${me.sol_slug}`);
+    return {
+      started: true,
+      messages: turns
+        .filter(t => !t.deleted && !t.userText?.startsWith('[context]'))
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map(t => t.role === 'user'
+          ? { mine: true, text: t.userText }
+          : { mine: false, text: t.avatarText, pending: !['ready', 'error'].includes(t.status), failed: t.status === 'error' }),
+    };
+  },
+
+  async 'POST sol'({ message }, me) {
+    const userText = me.sol_conv ? text(message, 500) : solContext(me);
+    const [ok] = await sql`
+      update users set sol_count = case when sol_day = current_date then sol_count + 1 else 1 end, sol_day = current_date
+      where id = ${me.id} and (sol_day is distinct from current_date or sol_count < 50) returning 1`;
+    if (!ok) throw fail(429, 'You’ve talked with Sol a lot today. Sol will be here again tomorrow.');
+    let conv = me.sol_conv;
+    if (!conv) {
+      const c = await sol('/api/conversations', { avatarOwnerUserId: process.env.MASKY_COMPANION_OWNER, avatarId: process.env.MASKY_COMPANION_AVATAR_ID });
+      await sql`update users set sol_conv = ${c.conversationId}, sol_slug = ${c.shareSlug} where id = ${me.id}`;
+      conv = c.conversationId;
+    }
+    await sol(`/api/conversations/${conv}/turn`, { userText, output: 'text' });
+  },
 };
 
 export default async function handler(req, res) {
@@ -157,7 +203,7 @@ export default async function handler(req, res) {
   try {
     req.token = /^[a-f0-9]{64}$/.test(req.cookies.sid) ? req.cookies.sid : undefined;
     const [me] = req.token ? await sql`
-      select u.id, u.name, u.picture, u.tags, u.bio from sessions s join users u on u.id = s.user_id
+      select u.id, u.name, u.picture, u.tags, u.bio, u.sol_conv, u.sol_slug from sessions s join users u on u.id = s.user_id
       where s.token = ${req.token} and s.created > now() - interval '30 days'` : [];
     if (!me && !['login', 'callback'].includes(req.query.route)) throw fail(401, 'Please sign in');
     const out = await route(req.body ?? {}, me, res, req);

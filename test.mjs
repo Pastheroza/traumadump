@@ -51,17 +51,21 @@ try {
   // TraumaMatch
   assert.deepEqual((await call('POST', 'profile', { tags: ['Grief & loss', 'Accident', 'not a tag'], bio: 'hi' }, A)).data.tags, ['Grief & loss', 'Accident']);
   await call('POST', 'profile', { tags: ['Accident'], bio: '' }, B);
-  const next = (await call('GET', 'next', null, A)).data;
-  assert.deepEqual([next.name, next.shared], [b, ['Accident']]);
-  assert.equal((await call('POST', 'message', { to: next.id, body: 'hi' }, A)).code, 403, 'no messages before a match');
-  assert.equal((await call('POST', 'swipe', { to: next.id, liked: true }, A)).data.match, false);
-  const aId = (await call('GET', 'next', null, B)).data.id;
+  assert.ok((await call('GET', 'next', null, A)).data.shared.length > 0, 'next person shares an experience');
+  const [{ id: aId }, { id: bId }] = await sql`select id from users where sub in (${a}, ${b}) order by sub`; // real members may also be candidates, so use ids
+  assert.equal((await call('POST', 'message', { to: bId, body: 'hi' }, A)).code, 403, 'no messages before a match');
+  assert.equal((await call('POST', 'swipe', { to: bId, liked: true }, A)).data.match, false);
   assert.equal((await call('POST', 'swipe', { to: aId, liked: true }, B)).data.match, true);
   assert.ok((await call('GET', 'matches', null, A)).data.some(m => m.name === b));
-  await call('POST', 'message', { to: next.id, body: 'hello' }, A);
+  await call('POST', 'message', { to: bId, body: 'hello' }, A);
   assert.deepEqual((await call('GET', 'messages', null, B, { with: aId })).data.map(m => [m.body, m.mine]), [['hello', false]]);
   await call('POST', 'unmatch', { to: aId }, B);
-  assert.equal((await call('POST', 'message', { to: next.id, body: 'hi' }, A)).code, 403, 'unmatch stops messages');
+  assert.equal((await call('POST', 'message', { to: bId, body: 'hi' }, A)).code, 403, 'unmatch stops messages');
+
+  // Sol: nothing started yet, and the daily limit stops a message before it reaches Masky
+  assert.deepEqual((await call('GET', 'sol', null, A)).data, { started: false, messages: [] });
+  await sql`update users set sol_day = current_date, sol_count = 50 where sub = ${a}`;
+  assert.equal((await call('POST', 'sol', {}, A)).code, 429, 'Sol daily limit');
 
   await call('POST', 'logout', {}, A);
   assert.equal((await call('GET', 'me', null, A)).code, 401, 'logout ends the session');

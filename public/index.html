@@ -220,6 +220,32 @@
   .thread .reply-form { padding: 14px 0 4px; border-top: 1px solid var(--rule); }
   .thread .reply-form input { border: 0; font-size: 16px; }
 
+  /* Sol */
+  .sol-head { display: flex; align-items: center; gap: 32px; }
+  .sol-face { position: relative; isolation: isolate; flex: none; width: 112px; height: 112px; }
+  .sol-face img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 6px var(--paper), 0 0 0 7px var(--rule); }
+  .sol-face::before { content: ''; position: absolute; inset: -22px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 68%); opacity: .6; animation: breathe 14s ease-in-out infinite; }
+  #sol.thinking .sol-face::before { animation-duration: 2.4s; opacity: .95; }
+  #solStart .lede { margin-bottom: 36px; }
+  .sol-chat { border-top: 1px solid var(--rule); }
+  .sol-chat .msgs { max-height: 60vh; min-height: 240px; }
+  .msgs .msg:not(:last-child) { animation: none; }
+  .msg.sol { font: 400 18px/1.55 var(--serif); }
+  .msg.failed { font: italic 400 15px var(--sans); color: var(--ink-3); background: none; border: 1px dashed var(--rule); }
+  .msg.typing { display: flex; gap: 5px; padding: 17px 18px; }
+  .msg.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); animation: blink 1.2s infinite; }
+  .msg.typing i:nth-child(2) { animation-delay: .2s; }
+  .msg.typing i:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .sol-chat .reply-form { padding: 14px 0 4px; border-top: 1px solid var(--rule); }
+  .sol-chat .reply-form input { border: 0; font-size: 16px; }
+  .voice { display: block; margin-top: 18px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .voice input { width: 16px; height: 16px; margin: 0 8px 0 0; vertical-align: -3px; accent-color: var(--ember); }
+  .voice span { color: var(--ink-3); }
+  .crisis-card { margin: 4px 0 14px; padding: 18px 20px; border: 1px solid var(--ember); border-radius: 18px; background: var(--ember-soft); font-size: 15px; }
+  .crisis-card a { font-weight: 600; }
+  .sol-note { max-width: 62ch; margin-top: 32px; }
+
   /* Help */
   .lines { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
   .lines li { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--rule); }
@@ -284,6 +310,11 @@
     .back { display: inline; }
     .msgs { max-height: none; min-height: 50vh; }
     .lines a { font-size: 22px; }
+    .sol-head { gap: 22px; }
+    .sol-face { width: 80px; height: 80px; }
+    .sol-chat .msgs { max-height: none; min-height: 0; }
+    .msg.sol { font-size: 17px; }
+    #solForm { scroll-margin-bottom: 110px; }
     .breathe-box { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 32px 24px; }
     .breathe-box .orb { width: 150px; }
     .breathe-box .overline { justify-content: center; }
@@ -300,6 +331,7 @@
   <a class="logo" href="/" aria-label="TraumaDump home"><span class="dot" aria-hidden="true"></span><span>trauma<i>dump</i></span></a>
   <nav aria-label="Main">
     <button data-view="feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>Dump</button>
+    <button data-view="sol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>Sol</button>
     <button data-view="match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>TraumaMatch</button>
     <button data-view="matches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H10l-6 4V5z"/></svg>Matches</button>
     <button data-view="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg>Help</button>
@@ -323,7 +355,7 @@
     </div>
     <ol class="pillars">
       <li><span class="num">01</span><h3>Dump</h3><p>Write it out. Only members can read it, only under your avatar, and you can delete it whenever you want.</p></li>
-      <li><span class="num">02</span><h3>Hold</h3><p>People reply with care. No likes, no follower counts, nothing to perform.</p></li>
+      <li><span class="num">02</span><h3>Hold</h3><p>People reply with care, and Sol, our AI companion, listens at any hour. No likes, no follower counts.</p></li>
       <li><span class="num">03</span><h3>TraumaMatch</h3><p>Like a dating app, except you match on what you’ve lived through, not on your hobbies.</p></li>
     </ol>
     <div class="promises">
@@ -347,6 +379,30 @@
       </div>
     </form>
     <div id="posts"></div>
+  </section>
+
+  <section id="sol" hidden>
+    <div class="page-head sol-head">
+      <div class="sol-face"><img src="/sol.jpg" alt="Portrait of Sol, the AI companion" width="112" height="112"></div>
+      <div>
+        <p class="overline">Sol · AI companion</p>
+        <h2>Someone to talk to, <em>any hour</em>.</h2>
+      </div>
+    </div>
+    <div id="solStart" hidden>
+      <p class="lede">Sol is an AI who listens without judging and answers gently. Sol only knows the experiences and short bio you chose in TraumaMatch, and lets you lead.</p>
+      <button class="btn" id="solBegin">Start talking <span class="arrow" aria-hidden="true">→</span></button>
+    </div>
+    <div class="sol-chat" id="solChat" hidden>
+      <div class="msgs" id="solMsgs" aria-live="polite"></div>
+      <p class="crisis-card" id="solCrisis" role="alert" hidden>It sounds like things are very heavy right now. If you’re thinking about ending your life or you’re in danger, please call or text <a href="tel:988">988</a> in the US, or your local emergency number, now. You deserve support from a real person.</p>
+      <form class="reply-form" id="solForm">
+        <input id="solBody" maxlength="500" required placeholder="Tell Sol what’s on your mind…" aria-label="Message to Sol">
+        <button class="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+      </form>
+      <label class="voice"><input type="checkbox" id="solVoice"> Read Sol’s replies aloud <span>· the voice is made on your device</span></label>
+    </div>
+    <p class="hint sol-note">Sol is an AI, not a therapist, and can get things wrong. What you write to Sol is sent to Masky, which uses Google Gemini to write Sol’s replies, and is stored on Masky in the TraumaDump owner’s account. Up to 50 messages a day. In crisis, call or text 988.</p>
   </section>
 
   <section id="match" hidden>
@@ -474,7 +530,7 @@ function show(view) {
   document.body.dataset.view = view;
   for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== view;
   for (const b of document.querySelectorAll('nav [data-view]')) b.setAttribute('aria-current', b.dataset.view === view ? 'page' : 'false');
-  return ({ feed: loadFeed, match: loadMatch, matches: loadMatches })[view]?.();
+  return ({ feed: loadFeed, sol: loadSol, match: loadMatch, matches: loadMatches })[view]?.();
 }
 
 async function start() {
@@ -526,6 +582,73 @@ $('#postForm').onsubmit = async e => {
   $('#postCount').textContent = '';
   toast('Posted. Thank you for trusting us with it.');
   loadFeed();
+};
+
+// Sol
+const CRISIS = /suicid|kill (myself|me)|end (my life|it all)|want(ed)? to die|wanna die|better off dead|self[- ]?harm|hurt(ing)? myself|cut(ting)? myself|overdose/i;
+let solHeard = -1, solPolls = 0;
+
+async function loadSol() {
+  clearTimeout(loadSol.t);
+  const s = await api('sol');
+  $('#solStart').hidden = s.started;
+  $('#solChat').hidden = !s.started;
+  const replies = s.messages.filter(m => !m.mine && !m.pending && m.text);
+  if (solHeard >= 0) replies.slice(solHeard).forEach(m => speak(m.text));
+  solHeard = replies.length;
+  const waiting = s.messages.some(m => m.pending) || !!s.messages.at(-1)?.mine;
+  const key = JSON.stringify(s.messages);
+  if (key !== loadSol.key) {
+    loadSol.key = key;
+    $('#solMsgs').replaceChildren(
+      ...s.messages.filter(m => !m.pending).map(m => m.failed
+        ? h('p', { className: 'msg failed' }, 'Sol couldn’t answer this one. Try sending it again.')
+        : h('p', { className: m.mine ? 'msg mine' : 'msg sol' }, m.text)),
+      ...waiting ? [typing()] : []);
+    $('#solMsgs').scrollTop = $('#solMsgs').scrollHeight;
+    $('#solForm').scrollIntoView({ block: 'nearest' });
+  }
+  $('#sol').classList.toggle('thinking', waiting);
+  $('#solBody').disabled = waiting;
+  solPolls = waiting ? solPolls + 1 : 0;
+  if (waiting && solPolls < 40 && document.body.dataset.view === 'sol') loadSol.t = setTimeout(loadSol, 1500);
+}
+
+const typing = () => h('p', { className: 'msg sol typing', ariaLabel: 'Sol is writing' }, h('i'), h('i'), h('i'));
+
+function speak(text) {
+  if (!$('#solVoice').checked || !('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = .95;
+  u.voice = speechSynthesis.getVoices().find(v => /^en/.test(v.lang) && /samantha|female|zira|aria|jenny/i.test(v.name)) ?? null;
+  speechSynthesis.speak(u);
+}
+
+if (!('speechSynthesis' in window)) $('.voice').hidden = true;
+try { $('#solVoice').checked = localStorage.getItem('solVoice') === '1'; } catch {}
+$('#solVoice').onchange = e => {
+  try { localStorage.setItem('solVoice', e.target.checked ? '1' : '0'); } catch {}
+  speechSynthesis.cancel();
+  if (e.target.checked) speechSynthesis.speak(new SpeechSynthesisUtterance('')); // unlocks speech on Safari
+};
+
+$('#solBegin').onclick = async () => {
+  $('#solBegin').disabled = true;
+  try { await api('sol', {}); } finally { $('#solBegin').disabled = false; }
+  loadSol();
+};
+
+$('#solForm').onsubmit = async e => {
+  e.preventDefault();
+  const message = $('#solBody').value;
+  if (CRISIS.test(message)) $('#solCrisis').hidden = false;
+  $('#solBody').value = '';
+  $('#solMsgs').append(h('p', { className: 'msg mine' }, message), typing());
+  $('#solMsgs').scrollTop = $('#solMsgs').scrollHeight;
+  loadSol.key = null;
+  try { await api('sol', { message }); }
+  catch (err) { $('#solBody').value = message; loadSol(); throw err; }
+  loadSol();
 };
 
 // TraumaMatch
