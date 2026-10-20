@@ -2,129 +2,462 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TraumaDump</title>
-<meta name="description" content="A private place to share what happened, get support, and find people who have been through it too.">
+<meta name="description" content="A private room to say what happened, get gentle support, and find people who survived the same thing.">
+<meta name="theme-color" content="#F3EFE8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12110F" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='10' fill='%23C2552D'/></svg>">
+<link rel="preload" href="/fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  :root { --bg: #f6f4f1; --card: #fff; --text: #2b2a33; --muted: #6b6878; --accent: #6d4fc2; --line: #e4e0ea; --warn: #fff1cc; --chip: #efeaf9; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #17161c; --card: #22212a; --text: #ecebf2; --muted: #a19eb0; --accent: #a58cf0; --line: #363442; --warn: #3a3220; --chip: #2f2a40; }
+  /* Fonts are self-hosted so visiting never pings a third party. */
+  @font-face { font-family: Newsreader; src: url(/fonts/newsreader.woff2) format('woff2'); font-weight: 200 800; font-display: swap; }
+  @font-face { font-family: Newsreader; src: url(/fonts/newsreader-italic.woff2) format('woff2'); font-weight: 200 800; font-style: italic; font-display: swap; }
+  @font-face { font-family: Inter; src: url(/fonts/inter.woff2) format('woff2'); font-weight: 300 700; font-display: swap; }
+
+  :root {
+    --paper: #F3EFE8; --paper-2: #EAE3D8; --ink: #1D1A16; --ink-2: #4A443B; --ink-3: #6F675B; --rule: #DCD4C6;
+    --ember: #C2552D; --glow: #F2B48F; --ember-soft: rgb(194 85 45 / .1); --on-ember: #fff;
+    --serif: Newsreader, 'Iowan Old Style', Georgia, serif;
+    --sans: Inter, system-ui, -apple-system, sans-serif;
+    --ease: cubic-bezier(.2, .7, .2, 1);
+    --gutter: clamp(20px, 6vw, 96px);
+    color-scheme: light dark;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #12110F; --paper-2: #1D1B18; --ink: #EFE9DF; --ink-2: #BDB4A6; --ink-3: #8A8275; --rule: #2C2925;
+      --ember: #E07A50; --glow: #9A4322; --ember-soft: rgb(224 122 80 / .12); --on-ember: #12110F;
+    }
+  }
+
   * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.5 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-  .crisis { background: var(--warn); padding: 8px 16px; text-align: center; font-size: 14px; }
-  .crisis a, a { color: inherit; }
-  header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 720px; margin: auto; padding: 16px; }
-  header h1 { font-size: 22px; margin: 0 auto 0 0; }
-  header h1 span { color: var(--accent); }
-  nav { display: flex; flex-wrap: wrap; gap: 4px; }
-  nav button { background: none; border: 0; color: var(--muted); padding: 6px 10px; border-radius: 8px; }
-  nav button.on { color: var(--accent); background: var(--card); font-weight: 600; }
-  main { max-width: 720px; margin: auto; padding: 0 16px 64px; }
-  .card { display: block; width: 100%; text-align: left; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 12px 0; }
-  h2, h3 { margin: 0 0 8px; }
-  label { display: block; margin: 8px 0; }
-  textarea, input:not([type]) { display: block; width: 100%; margin-top: 4px; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
-  button { font: inherit; cursor: pointer; }
-  .btn { background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 10px; padding: 8px 18px; }
-  .btn.ghost { background: none; color: var(--accent); }
-  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; font-size: 13px; }
-  .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-  .row input { margin: 0; flex: 1; }
-  .meta { color: var(--muted); font-size: 13px; margin: 0; }
-  .body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
-  .comment { border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
-  .comment p { margin: 2px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--chip); border-radius: 999px; padding: 4px 12px; margin: 4px 4px 0 0; font-size: 14px; }
-  .msg { max-width: 80%; width: fit-content; background: var(--chip); border-radius: 14px; padding: 6px 12px; margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .msg.mine { margin-left: auto; background: var(--accent); color: #fff; }
-  a.btn { display: inline-block; text-decoration: none; }
-  .who img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
-  .error { color: #c0392b; min-height: 1.5em; margin: 4px 0; }
-  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 10px; max-width: calc(100% - 32px); }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body { margin: 0; min-height: 100dvh; background: var(--paper); color: var(--ink); font: 400 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  /* Paper grain */
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .2; mix-blend-mode: multiply;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .45 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) { body::after { mix-blend-mode: screen; filter: invert(1); opacity: .05; } }
+  ::selection { background: var(--ember); color: var(--on-ember); }
+  :focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  button { font: inherit; color: inherit; cursor: pointer; }
   [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 300; letter-spacing: -.025em; margin: 0; }
+  h1 em, h2 em, h3 em { color: var(--ember); }
+  .overline { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; font: 500 11.5px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .overline::before { content: ''; width: 20px; height: 1px; background: currentColor; }
+  .lede { font: 300 clamp(19px, 2vw, 23px)/1.5 var(--serif); color: var(--ink-2); max-width: 36ch; margin: 0; }
+  .hint { font-size: 13px; color: var(--ink-3); margin: 0; }
+  .empty { font: italic 300 clamp(22px, 3vw, 26px)/1.4 var(--serif); color: var(--ink-3); text-align: center; padding: 72px 16px; margin: 0; text-wrap: balance; }
+  .empty.small { font-size: 19px; padding: 40px 16px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 12px; height: 52px; padding: 0 28px; border: 1px solid var(--ink); border-radius: 999px; background: var(--ink); color: var(--paper); font: 500 15px var(--sans); letter-spacing: -.005em; text-decoration: none; transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .2s, border-color .2s; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgb(29 26 22 / .55); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn .arrow { transition: transform .35s var(--ease); }
+  .btn:hover .arrow { transform: translateX(4px); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+  .btn.ghost:hover { border-color: var(--ink); box-shadow: none; }
+  .btn.small { height: 40px; padding: 0 20px; font-size: 14px; }
+  .text-btn { background: none; border: 0; padding: 4px 0; font: 500 13px var(--sans); color: var(--ink-3); transition: color .2s; }
+  .text-btn:hover { color: var(--ember); }
+  .send { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--ink); color: var(--paper); transition: transform .25s var(--ease), opacity .25s; }
+  .send:hover { transform: scale(1.06); }
+  .send svg { width: 18px; height: 18px; }
+  input:placeholder-shown + .send { opacity: .18; pointer-events: none; }
+  .composer:has(textarea:placeholder-shown) .btn { opacity: .3; pointer-events: none; }
+
+  /* Avatars */
+  .av { flex: none; width: var(--s); height: var(--s); border-radius: 50%; object-fit: cover; background: var(--paper-2); display: inline-grid; place-items: center; font: 400 calc(var(--s) * .45)/1 var(--serif); color: var(--ink-2); }
+
+  /* Crisis line + header */
+  .crisis { margin: 0; padding: 9px 16px; text-align: center; font-size: 12.5px; color: var(--ink-2); border-bottom: 1px solid var(--rule); }
+  .crisis::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 10px; border-radius: 50%; background: var(--ember); vertical-align: 1px; }
+  .crisis b { color: var(--ink); font-weight: 600; }
+  header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 28px; padding: 16px var(--gutter); background: color-mix(in srgb, var(--paper) 80%, transparent); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); border-bottom: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); }
+  .logo { display: flex; align-items: center; gap: 11px; margin-right: auto; font: 400 25px/1 var(--serif); letter-spacing: -.03em; text-decoration: none; }
+  .logo i { color: var(--ember); }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 5px var(--ember-soft); animation: breathe 14s ease-in-out infinite; }
+  nav { display: flex; gap: 2px; }
+  nav button { position: relative; padding: 8px 14px; background: none; border: 0; border-radius: 999px; font: 500 14px var(--sans); color: var(--ink-3); transition: color .2s, background .2s; }
+  nav button:hover { color: var(--ink); }
+  nav button[aria-current=page] { color: var(--ink); }
+  nav button[aria-current=page]::after { content: ''; position: absolute; left: 50%; bottom: -1px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--ember); }
+  nav svg { display: none; }
+  .me { display: flex; align-items: center; gap: 14px; padding-left: 20px; border-left: 1px solid var(--rule); }
+  body:is([data-view=auth], [data-view=loading]) :is(nav, .me) { display: none; }
+
+  main { max-width: 680px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 24px) 120px; }
+  main > section:not([hidden]) { animation: fade .6s var(--ease) both; }
+  [data-view=auth] main { max-width: none; padding: 0; }
+  [data-view=matches] main { max-width: 1040px; }
+  [data-view=loading] main::before { content: ''; display: block; width: 12px; height: 12px; margin: 32vh auto; border-radius: 50%; background: var(--ember); animation: breathe 3s ease-in-out infinite; }
+  .page-head { padding: 64px 0 44px; }
+  .page-head h2 { font-size: clamp(42px, 6.5vw, 68px); line-height: 1; letter-spacing: -.035em; text-wrap: balance; }
+  .page-head .lede { margin-top: 20px; }
+
+  /* Breathing orb */
+  .orb { position: absolute; z-index: -1; aspect-ratio: 1; pointer-events: none; }
+  .orb div { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 38% 36%, var(--glow), var(--ember) 42%, transparent 70%); filter: blur(42px); opacity: .5; animation: breathe 14s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { transform: scale(.7); } 28.6%, 57.1% { transform: scale(1); } }
+  .breath { display: grid; margin: 0; font: italic 300 19px var(--serif); color: var(--ink-3); }
+  .breath span { grid-area: 1 / 1; opacity: 0; animation: 14s linear infinite; }
+  .breath span:nth-child(1) { animation-name: b-in; }
+  .breath span:nth-child(2) { animation-name: b-hold; }
+  .breath span:nth-child(3) { animation-name: b-out; }
+  @keyframes b-in { 3%, 25% { opacity: 1; } 0%, 28.6%, 100% { opacity: 0; } }
+  @keyframes b-hold { 32%, 54% { opacity: 1; } 0%, 28.6%, 57.1%, 100% { opacity: 0; } }
+  @keyframes b-out { 61%, 96% { opacity: 1; } 0%, 57.1%, 100% { opacity: 0; } }
+
+  /* Landing */
+  .hero { position: relative; isolation: isolate; overflow: hidden; display: grid; align-items: center; min-height: min(88vh, 900px); padding: 72px var(--gutter) 96px; }
+  .hero .orb { width: min(78vw, 820px); right: -12vw; top: 50%; translate: 0 -50%; }
+  .hero h1 { max-width: 11ch; margin-bottom: 36px; font-size: clamp(56px, 9.5vw, 136px); line-height: .92; letter-spacing: -.045em; }
+  .hero .lede { margin-bottom: 44px; }
+  .hero .fine { max-width: 46ch; margin: 22px 0 0; font-size: 13px; color: var(--ink-3); }
+  .hero .breath { position: absolute; right: var(--gutter); bottom: 44px; }
+  .error { min-height: 0; margin: 0 0 16px; color: var(--ember); font-size: 14px; }
+  .error:empty { display: none; }
+  .pillars { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0 var(--gutter); list-style: none; border-top: 1px solid var(--rule); }
+  .pillars li { padding: 44px 40px 64px 0; }
+  .pillars li + li { padding-left: 40px; border-left: 1px solid var(--rule); }
+  .num { font: 500 12px var(--sans); letter-spacing: .1em; color: var(--ember); font-variant-numeric: tabular-nums; }
+  .pillars h3 { margin: 28px 0 14px; font-size: 40px; letter-spacing: -.03em; }
+  .pillars p { max-width: 32ch; margin: 0; color: var(--ink-2); }
+  .promises { padding: 112px var(--gutter); border-top: 1px solid var(--rule); }
+  .promises ul { margin: 0; padding: 0; list-style: none; font: 300 clamp(40px, 7vw, 92px)/1.02 var(--serif); letter-spacing: -.04em; }
+  .promises li:nth-child(even) { font-style: italic; color: var(--ink-3); }
+  .site-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px 48px; padding: 40px var(--gutter) 56px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--ink-3); }
+  .site-foot p { margin: 0; max-width: 52ch; }
+
+  /* Dump */
+  .composer { padding: 64px 0 28px; border-bottom: 1px solid var(--rule); transition: border-color .3s; }
+  .composer:focus-within { border-color: var(--ink-3); }
+  .composer textarea { display: block; width: 100%; min-height: 2.7em; padding: 0; border: 0; outline: none; resize: none; field-sizing: content; background: none; color: var(--ink); font: 300 clamp(28px, 4.4vw, 38px)/1.28 var(--serif); letter-spacing: -.02em; }
+  .composer textarea::placeholder { color: var(--ink-3); opacity: .65; font-style: italic; }
+  .composer-foot { display: flex; align-items: center; gap: 16px; margin-top: 24px; }
+  .composer-foot .hint { margin-right: auto; }
+  .count { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .post { padding: 44px 0 40px; border-bottom: 1px solid var(--rule); animation: rise .7s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+  .byline { display: flex; align-items: center; gap: 12px; min-width: 0; font-size: 14px; }
+  .byline b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .byline time { flex: none; color: var(--ink-3); }
+  .byline time::before { content: '·'; margin-right: 12px; }
+  .byline .text-btn { margin-left: auto; }
+  .post-body { margin: 22px 0 0; font: 400 20px/1.62 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .replies { margin: 28px 0 0 15px; padding-left: 27px; border-left: 1px solid var(--rule); }
+  .reply { margin-bottom: 22px; }
+  .reply .byline { font-size: 13px; gap: 10px; }
+  .reply p { margin: 6px 0 0 32px; color: var(--ink-2); font-size: 15.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .reply-form { display: flex; align-items: center; gap: 12px; }
+  .reply-form input { flex: 1; min-width: 0; padding: 10px 0; border: 0; border-bottom: 1px solid var(--rule); outline: none; background: none; color: var(--ink); font: 400 15px var(--sans); transition: border-color .25s; }
+  .reply-form input:focus { border-color: var(--ember); }
+  .reply-form input::placeholder { color: var(--ink-3); }
+
+  /* TraumaMatch */
+  .cand { position: relative; display: grid; justify-items: center; padding: 56px 28px 40px; text-align: center; border: 1px solid var(--rule); border-radius: 32px; background: radial-gradient(120% 70% at 50% 0%, var(--ember-soft), transparent 70%); transition: transform .45s var(--ease), opacity .45s var(--ease); animation: rise .7s var(--ease) both; }
+  .cand.go-left { transform: translateX(-90px) rotate(-5deg); opacity: 0; }
+  .cand.go-right { transform: translateX(90px) rotate(5deg); opacity: 0; }
+  .cand .av { box-shadow: 0 0 0 6px var(--paper), 0 0 0 7px var(--rule); }
+  .cand h3 { margin: 28px 0 26px; font-size: clamp(38px, 6vw, 52px); line-height: 1; letter-spacing: -.035em; overflow-wrap: anywhere; }
+  .cand .overline { margin-bottom: 14px; }
+  .cand .overline::after { content: ''; width: 20px; height: 1px; background: currentColor; }
+  .shared { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .pill { padding: 7px 15px; border: 1px solid var(--ember); border-radius: 999px; color: var(--ember); font-size: 13.5px; }
+  .cand blockquote { max-width: 34ch; margin: 30px 0 0; font: italic 300 21px/1.5 var(--serif); color: var(--ink-2); overflow-wrap: anywhere; }
+  .cand blockquote::before { content: '“'; } .cand blockquote::after { content: '”'; }
+  .choices { display: flex; justify-content: center; gap: 40px; margin-top: 44px; }
+  .round { display: grid; justify-items: center; gap: 10px; padding: 0; background: none; border: 0; font: 500 12px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .round i { display: grid; place-items: center; width: 68px; height: 68px; border: 1px solid var(--rule); border-radius: 50%; background: var(--paper); color: var(--ink); transition: transform .3s var(--ease), border-color .2s, box-shadow .3s; }
+  .round:hover i { transform: scale(1.07); border-color: var(--ink); }
+  .round.yes i { background: var(--ember); border-color: var(--ember); color: var(--on-ember); box-shadow: 0 14px 34px -14px var(--ember); }
+  .round.yes:hover i { box-shadow: 0 18px 40px -12px var(--ember); }
+  .round svg { width: 24px; height: 24px; }
+  .story { margin-top: 56px; border-block: 1px solid var(--rule); }
+  .story summary { display: flex; align-items: baseline; gap: 18px; padding: 24px 0; list-style: none; cursor: pointer; font: 400 26px var(--serif); letter-spacing: -.02em; }
+  .story summary::-webkit-details-marker { display: none; }
+  .story summary::after { content: '+'; margin-left: auto; font: 300 26px/1 var(--sans); color: var(--ink-3); transition: transform .35s var(--ease); }
+  .story[open] summary::after { transform: rotate(45deg); }
+  .story summary small { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 13px var(--sans); color: var(--ink-3); }
+  .story form { padding-bottom: 36px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 32px; }
+  .tag { position: relative; padding: 9px 16px; border: 1px solid var(--rule); border-radius: 999px; font-size: 14px; cursor: pointer; user-select: none; transition: background .25s var(--ease), color .25s, border-color .25s; }
+  .tag:hover { border-color: var(--ink-3); }
+  .tag input { position: absolute; opacity: 0; pointer-events: none; }
+  .tag:has(:checked) { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .tag:has(:focus-visible) { outline: 2px solid var(--ember); outline-offset: 2px; }
+  .field { display: block; margin-bottom: 28px; }
+  .field span { display: block; margin-bottom: 6px; font-size: 13px; color: var(--ink-3); }
+  .field textarea { display: block; width: 100%; min-height: 2.2em; padding: 4px 0 10px; border: 0; border-bottom: 1px solid var(--rule); outline: none; resize: none; field-sizing: content; background: none; color: var(--ink); font: 400 19px/1.5 var(--serif); transition: border-color .25s; }
+  .field textarea:focus { border-color: var(--ember); }
+
+  /* Matches */
+  .inbox { display: grid; grid-template-columns: 300px 1fr; min-height: 520px; border-top: 1px solid var(--rule); }
+  .inbox.none { display: block; }
+  .inbox.none .thread { display: none; }
+  .match-list { border-right: 1px solid var(--rule); }
+  .inbox.none .match-list { border: 0; }
+  .match-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 16px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); transition: background .2s; }
+  .match-item:hover, .match-item.on { background: var(--paper-2); }
+  .match-item span { min-width: 0; }
+  .match-item b { display: block; font: 400 21px/1.2 var(--serif); letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; }
+  .match-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--ink-3); }
+  .thread { display: flex; flex-direction: column; padding-left: 36px; min-width: 0; }
+  .conv { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .thread-head { display: flex; align-items: center; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+  .thread-head .byline { flex: 1; font-size: 16px; }
+  .back { display: none; }
+  .msgs { display: flex; flex-direction: column; gap: 6px; flex: 1; max-height: 58vh; min-height: 300px; overflow-y: auto; padding: 28px 2px; }
+  .msg { align-self: flex-start; max-width: 76%; margin: 0; padding: 11px 17px; border-radius: 22px 22px 22px 6px; background: var(--paper-2); font-size: 15.5px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .45s var(--ease) both; }
+  .msg.mine { align-self: flex-end; border-radius: 22px 22px 6px 22px; background: var(--ember); color: var(--on-ember); }
+  .thread .reply-form { padding: 14px 0 4px; border-top: 1px solid var(--rule); }
+  .thread .reply-form input { border: 0; font-size: 16px; }
+
+  /* Help */
+  .lines { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+  .lines li { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--rule); }
+  .lines b { display: block; font: 400 22px/1.25 var(--serif); letter-spacing: -.015em; }
+  .lines span { font-size: 13px; color: var(--ink-3); }
+  .lines a { flex: none; font: 300 30px/1 var(--serif); letter-spacing: -.02em; text-decoration: none; font-variant-numeric: lining-nums tabular-nums; transition: color .2s; }
+  .lines a:hover { color: var(--ember); }
+  .lines a.site { font-size: 18px; }
+  .breathe-box { position: relative; isolation: isolate; display: grid; grid-template-columns: 180px 1fr; align-items: center; gap: 36px; margin: 56px 0 28px; padding: 36px; border: 1px solid var(--rule); border-radius: 32px; overflow: hidden; }
+  .breathe-box .orb { position: relative; z-index: 0; width: 180px; }
+  .breathe-box .orb div { filter: blur(20px); opacity: .75; }
+  .breathe-box p:not(.overline):not(.breath) { margin: 0 0 14px; font: 300 22px/1.4 var(--serif); }
+  .breathe-box .breath { font-size: 26px; color: var(--ember); }
+
+  /* Match moment */
+  dialog { width: calc(100% - 32px); max-width: 520px; padding: 56px 32px 44px; border: 0; border-radius: 36px; background: var(--paper); color: var(--ink); text-align: center; box-shadow: 0 50px 120px -40px rgb(0 0 0 / .55); }
+  dialog::backdrop { background: rgb(18 17 15 / .35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  dialog[open] { animation: pop .6s var(--ease) both; }
+  .pair { display: flex; justify-content: center; margin-bottom: 32px; }
+  .pair .av { box-shadow: 0 0 0 5px var(--paper); }
+  .pair .av + .av { margin-left: -20px; }
+  dialog .overline { justify-content: center; }
+  dialog .overline::after { content: ''; width: 20px; height: 1px; background: currentColor; }
+  dialog h2 { font-size: clamp(36px, 7vw, 48px); line-height: 1.02; letter-spacing: -.035em; }
+  dialog .lede { margin: 18px auto 36px; font-size: 19px; }
+  dialog .choices { margin: 0; gap: 12px; flex-wrap: wrap; }
+
+  #toast { position: fixed; left: 50%; bottom: 32px; z-index: 60; translate: -50% 0; max-width: calc(100% - 32px); padding: 13px 22px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 20px 40px -20px rgb(0 0 0 / .5); animation: rise .45s var(--ease) both; }
+
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(.96); } }
+
+  @media (max-width: 760px) {
+    header { gap: 16px; padding-block: 14px; background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .me { padding: 0; border: 0; }
+    nav { position: fixed; inset: auto 0 0; z-index: 30; justify-content: space-around; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); border-top: 1px solid var(--rule); }
+    nav button { flex: 1; display: grid; justify-items: center; gap: 4px; padding: 6px 2px; font-size: 11px; }
+    nav button[aria-current=page] { color: var(--ember); }
+    nav button[aria-current=page]::after { display: none; }
+    nav svg { display: block; width: 22px; height: 22px; }
+    main { padding-bottom: 140px; }
+    #toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
+    .hero { min-height: auto; padding-top: 56px; }
+    .hero .orb { width: 120vw; right: -50vw; top: 30%; }
+    .hero .breath { position: static; margin-top: 48px; }
+    .pillars { grid-template-columns: 1fr; }
+    .pillars li, .pillars li + li { padding: 36px 0 44px; border: 0; }
+    .pillars li + li { border-top: 1px solid var(--rule); }
+    .promises { padding-block: 80px; }
+    .page-head { padding: 44px 0 32px; }
+    .composer { padding-top: 44px; }
+    .composer-foot .hint { font-size: 12px; }
+    .post-body { font-size: 19px; }
+    .replies { margin-left: 10px; padding-left: 18px; }
+    .reply p { margin-left: 0; }
+    .cand { padding: 44px 20px 32px; border-radius: 28px; }
+    .inbox { display: block; }
+    .match-list { border: 0; }
+    .inbox:not(.reading) .thread, .inbox.reading .match-list { display: none; }
+    .thread { padding: 0; }
+    .back { display: inline; }
+    .msgs { max-height: none; min-height: 50vh; }
+    .lines a { font-size: 22px; }
+    .breathe-box { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 32px 24px; }
+    .breathe-box .orb { width: 150px; }
+    .breathe-box .overline { justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    .breath span:nth-child(1) { opacity: 1; }
+  }
 </style>
 </head>
-<body>
-<div class="crisis">In crisis right now? Call or text <a href="tel:988"><b>988</b></a> (US) or find a line in your country at <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>.</div>
+<body data-view="loading">
+<p class="crisis">In crisis right now? Call or text <a href="tel:988"><b>988</b></a> in the US, or find a line in your country at <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></p>
 <header>
-  <h1>Trauma<span>Dump</span></h1>
-  <nav hidden>
-    <button data-view="feed">Dump</button>
-    <button data-view="match">TraumaMatch</button>
-    <button data-view="matches">Matches</button>
-    <button data-view="help">Help</button>
-    <button id="logout">Sign out</button>
+  <a class="logo" href="/" aria-label="TraumaDump home"><span class="dot" aria-hidden="true"></span><span>trauma<i>dump</i></span></a>
+  <nav aria-label="Main">
+    <button data-view="feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>Dump</button>
+    <button data-view="match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>TraumaMatch</button>
+    <button data-view="matches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H10l-6 4V5z"/></svg>Matches</button>
+    <button data-view="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></svg>Help</button>
   </nav>
+  <div class="me"><span id="meAv"></span><button class="text-btn" id="logout">Sign out</button></div>
 </header>
 
 <main>
   <section id="auth" hidden>
-    <div class="card">
-      <h2>A private place to let it out</h2>
-      <p class="meta">Only signed-in members can read anything here. You sign in with a Masky avatar, and members see its name and picture, so pick one that doesn't show your real name or face.</p>
-      <p class="error" id="authError" role="alert"></p>
-      <a class="btn" href="/api/login">Login with Masky</a>
+    <div class="hero">
+      <div class="orb" aria-hidden="true"><div></div></div>
+      <div>
+        <p class="overline">A private room · members only</p>
+        <h1>Say the thing you’ve never <em>said</em>.</h1>
+        <p class="lede">Write down what happened. Get gentle replies from people who have been there. Find the ones who survived the same thing.</p>
+        <p class="error" id="authError" role="alert"></p>
+        <a class="btn" href="/api/login">Login with Masky <span class="arrow" aria-hidden="true">→</span></a>
+        <p class="fine">You sign in with a Masky avatar. Pick one without your face or real name, because that’s all anyone here will see.</p>
+      </div>
+      <p class="breath" aria-hidden="true"><span>breathe in</span><span>hold</span><span>breathe out</span></p>
     </div>
+    <ol class="pillars">
+      <li><span class="num">01</span><h3>Dump</h3><p>Write it out. Only members can read it, only under your avatar, and you can delete it whenever you want.</p></li>
+      <li><span class="num">02</span><h3>Hold</h3><p>People reply with care. No likes, no follower counts, nothing to perform.</p></li>
+      <li><span class="num">03</span><h3>TraumaMatch</h3><p>Like a dating app, except you match on what you’ve lived through, not on your hobbies.</p></li>
+    </ol>
+    <div class="promises">
+      <p class="overline">What we don’t do</p>
+      <ul><li>No email.</li><li>No real names.</li><li>No public pages.</li><li>No likes. No ads.</li></ul>
+    </div>
+    <footer class="site-foot">
+      <p>TraumaDump is peer support, not therapy. If you are in danger right now, call 988 in the US or your local emergency number.</p>
+      <p>Built for AI Workforce 2026</p>
+    </footer>
   </section>
 
   <section id="feed" hidden>
-    <form class="card" id="postForm">
-      <label for="postBody"><b>What happened?</b> <span class="meta">Members see this under your username only. You can delete it any time.</span></label>
-      <textarea id="postBody" rows="4" maxlength="5000" required></textarea>
-      <div class="row"><button class="btn">Post</button></div>
+    <form class="composer" id="postForm">
+      <label class="overline" for="postBody">The Dump</label>
+      <textarea id="postBody" maxlength="5000" required placeholder="What happened?"></textarea>
+      <div class="composer-foot">
+        <p class="hint">Members only · under your avatar · delete any time</p>
+        <span class="count" id="postCount"></span>
+        <button class="btn small">Post</button>
+      </div>
     </form>
     <div id="posts"></div>
   </section>
 
   <section id="match" hidden>
-    <form class="card" id="profileForm">
-      <h3>What have you been through?</h3>
-      <p class="meta">TraumaMatch shows you people who share at least one of these. They see your username, your bio and the experiences you share.</p>
-      <div id="tags"></div>
-      <label>Short bio <textarea id="bio" rows="2" maxlength="300"></textarea></label>
-      <button class="btn">Save</button>
-    </form>
+    <div class="page-head">
+      <p class="overline">TraumaMatch</p>
+      <h2>Find the people who <em>get it</em>.</h2>
+    </div>
     <div id="candidate"></div>
+    <details class="story" id="story">
+      <summary>Your story <small id="myTags"></small></summary>
+      <form id="profileForm">
+        <p class="hint">Pick what you’ve lived through. People who share at least one of these see your avatar, your bio and what you have in common.</p>
+        <div class="tags" id="tags" role="group" aria-label="Experiences"></div>
+        <label class="field"><span>A few words about you (optional)</span><textarea id="bio" maxlength="300"></textarea></label>
+        <button class="btn small">Save</button>
+      </form>
+    </details>
   </section>
 
   <section id="matches" hidden>
-    <div id="matchList"></div>
-    <div id="thread" class="card" hidden>
-      <div class="row"><h3 id="threadName" style="flex:1;margin:0"></h3><button class="link" id="unmatch">Unmatch</button></div>
-      <div id="msgs"></div>
-      <form id="msgForm" class="row"><input id="msgBody" maxlength="2000" required aria-label="Message"><button class="btn">Send</button></form>
+    <div class="page-head">
+      <p class="overline">Matches</p>
+      <h2>People who <em>walked it too</em>.</h2>
+    </div>
+    <div class="inbox" id="inbox">
+      <div class="match-list" id="matchList"></div>
+      <div class="thread">
+        <p class="empty small" id="pick">Choose someone to talk to.</p>
+        <div class="conv" id="conv" hidden>
+          <div class="thread-head">
+            <button class="text-btn back" id="back">← All</button>
+            <div class="byline" id="threadWho"></div>
+            <button class="text-btn" id="unmatch">Unmatch</button>
+          </div>
+          <div class="msgs" id="msgs"></div>
+          <form class="reply-form" id="msgForm">
+            <input id="msgBody" maxlength="2000" required placeholder="Write gently…" aria-label="Message">
+            <button class="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+          </form>
+        </div>
+      </div>
     </div>
   </section>
 
   <section id="help" hidden>
-    <div class="card">
-      <h2>Get help now</h2>
-      <p class="meta">TraumaDump is peer support, not therapy. These are free and confidential.</p>
-      <ul>
-        <li><b>988 Suicide &amp; Crisis Lifeline</b> (US): call or text <a href="tel:988">988</a></li>
-        <li><b>Crisis Text Line</b> (US): text HOME to <a href="sms:741741">741741</a></li>
-        <li><b>RAINN</b> sexual assault hotline (US): <a href="tel:18006564673">1-800-656-4673</a></li>
-        <li><b>NAMI HelpLine</b> (US): <a href="tel:18009506264">1-800-950-6264</a></li>
-        <li><b>Anywhere else</b>: <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></li>
-      </ul>
-      <p>If you are in immediate danger, call your local emergency number.</p>
+    <div class="page-head">
+      <p class="overline">Help</p>
+      <h2>You don’t have to hold it <em>alone</em>.</h2>
+      <p class="lede">TraumaDump is peer support, not therapy. These lines are free, confidential and answered by trained people.</p>
     </div>
+    <ul class="lines">
+      <li><div><b>988 Suicide &amp; Crisis Lifeline</b><span>US · call or text, 24/7</span></div><a href="tel:988">988</a></li>
+      <li><div><b>Crisis Text Line</b><span>US · text HOME</span></div><a href="sms:741741">741741</a></li>
+      <li><div><b>RAINN</b><span>US · sexual assault hotline</span></div><a href="tel:18006564673">800 656 4673</a></li>
+      <li><div><b>NAMI HelpLine</b><span>US · mental health support</span></div><a href="tel:18009506264">800 950 6264</a></li>
+      <li><div><b>Anywhere else</b><span>A free line in your country</span></div><a class="site" href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com ↗</a></li>
+    </ul>
+    <div class="breathe-box">
+      <div class="orb" aria-hidden="true"><div></div></div>
+      <div>
+        <p class="overline">Need a minute?</p>
+        <p>Breathe with the circle. In for four, hold for four, out for six.</p>
+        <p class="breath" aria-hidden="true"><span>breathe in</span><span>hold</span><span>breathe out</span></p>
+      </div>
+    </div>
+    <p class="hint">If you are in immediate danger, call your local emergency number.</p>
   </section>
 </main>
+
+<dialog id="matched">
+  <form method="dialog">
+    <div class="pair" id="pair"></div>
+    <p class="overline">It’s a match</p>
+    <h2>You’re not alone <em>in this</em>.</h2>
+    <p class="lede" id="matchedText"></p>
+    <div class="choices">
+      <button class="btn" value="hello">Say hello <span class="arrow" aria-hidden="true">→</span></button>
+      <button class="btn ghost" value="later">Keep looking</button>
+    </div>
+  </form>
+</dialog>
 <div id="toast" role="status" hidden></div>
 
 <script>
 const $ = s => document.querySelector(s);
 const h = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-const who = (name, picture) => h('span', { className: 'who' }, picture ? h('img', { src: picture, alt: '' }) : '', name);
-const when = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+const svg = inner => { const t = document.createElement('template'); t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">${inner}</svg>`; return t.content.firstChild; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 let me, peer;
 
+function avatar(name, picture, size) {
+  const e = picture ? h('img', { className: 'av', src: picture, alt: '', loading: 'lazy' }) : h('span', { className: 'av' }, (name || '?')[0].toUpperCase());
+  e.style.setProperty('--s', size + 'px');
+  e.setAttribute('aria-hidden', 'true');
+  return e;
+}
+
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+function time(t) {
+  const s = (new Date(t) - Date.now()) / 1000;
+  const [unit, n] = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]].find(([, n]) => Math.abs(s) >= n) ?? [];
+  return h('time', { dateTime: t, title: new Date(t).toLocaleString() }, unit ? rtf.format(Math.round(s / n), unit) : 'just now');
+}
+
+const empty = (...lines) => h('p', { className: 'empty' }, ...lines.flatMap((l, i) => i ? [h('br'), l] : [l]));
+
 function toast(msg) {
-  Object.assign($('#toast'), { textContent: msg, hidden: false });
+  const t = $('#toast');
+  t.hidden = true; t.textContent = msg; void t.offsetWidth; t.hidden = false;
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => $('#toast').hidden = true, 4000);
+  toast.t = setTimeout(() => t.hidden = true, 4000);
 }
 addEventListener('unhandledrejection', e => e.reason?.message !== 'Please sign in' && toast(e.reason?.message ?? 'Something went wrong'));
 
@@ -137,14 +470,17 @@ async function api(route, body) {
 }
 
 function show(view) {
-  $('nav').hidden = view === 'auth';
+  if (document.body.dataset.view !== view) scrollTo({ top: 0, behavior: 'instant' });
+  document.body.dataset.view = view;
   for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== view;
-  for (const b of document.querySelectorAll('nav [data-view]')) b.classList.toggle('on', b.dataset.view === view);
-  ({ feed: loadFeed, match: loadMatch, matches: loadMatches })[view]?.();
+  for (const b of document.querySelectorAll('nav [data-view]')) b.setAttribute('aria-current', b.dataset.view === view ? 'page' : 'false');
+  return ({ feed: loadFeed, match: loadMatch, matches: loadMatches })[view]?.();
 }
 
 async function start() {
   me = await api('me');
+  $('#meAv').replaceChildren(avatar(me.name, me.picture, 32));
+  $('#meAv').title = me.name;
   show('feed');
 }
 
@@ -152,61 +488,87 @@ for (const b of document.querySelectorAll('nav [data-view]')) b.onclick = () => 
 $('#logout').onclick = () => api('logout', {}).then(() => show('auth'));
 
 if (new URLSearchParams(location.search).has('error')) {
-  $('#authError').textContent = "Masky sign-in didn't finish. Please try again.";
+  $('#authError').textContent = 'Masky sign-in didn’t finish. Please try again.';
   history.replaceState(null, '', '/');
 }
 
 // Dump
 async function loadFeed() {
   const posts = await api('posts');
-  $('#posts').replaceChildren(...posts.map(p => h('article', { className: 'card' },
-    h('div', { className: 'row' },
-      h('p', { className: 'meta', style: 'flex:1' }, who(p.name, p.picture), ` · ${when(p.created)}`),
-      p.mine ? h('button', { className: 'link', onclick: () => confirm('Delete this post and its replies?') && api('delete', { post_id: p.id }).then(loadFeed) }, 'Delete') : ''),
-    h('p', { className: 'body' }, p.body),
-    ...p.comments.map(c => h('div', { className: 'comment' }, h('p', { className: 'meta' }, who(c.name, c.picture), ` · ${when(c.created)}`), h('p', {}, c.body))),
-    commentForm(p.id))));
-  if (!posts.length) $('#posts').append(h('p', { className: 'card meta' }, 'Nothing here yet. You can be the first to share.'));
+  $('#posts').replaceChildren(...posts.map((p, i) => h('article', { className: 'post', style: `--i:${Math.min(i, 6)}` },
+    h('div', { className: 'byline' }, avatar(p.name, p.picture, 32), h('b', {}, p.name), time(p.created),
+      p.mine ? h('button', { className: 'text-btn', onclick: () => confirm('Delete this post and its replies?') && api('delete', { post_id: p.id }).then(loadFeed) }, 'Delete') : ''),
+    h('p', { className: 'post-body' }, p.body),
+    h('div', { className: 'replies' },
+      ...p.comments.map(c => h('div', { className: 'reply' },
+        h('div', { className: 'byline' }, avatar(c.name, c.picture, 22), h('b', {}, c.name), time(c.created)),
+        h('p', {}, c.body))),
+      replyForm(p.id)))));
+  if (!posts.length) $('#posts').append(empty('It’s quiet here.', 'You could be the first to say it.'));
 }
 
-function commentForm(postId) {
-  const input = h('input', { placeholder: 'Say something supportive…', maxLength: 2000, required: true });
+function replyForm(postId) {
+  const input = h('input', { placeholder: 'Reply with care…', maxLength: 2000, required: true });
   input.setAttribute('aria-label', 'Reply');
-  return h('form', { className: 'row', onsubmit: async e => {
+  return h('form', { className: 'reply-form', onsubmit: async e => {
     e.preventDefault();
     await api('comment', { post_id: postId, body: input.value });
     loadFeed();
-  } }, input, h('button', { className: 'btn ghost' }, 'Reply'));
+  } }, input, h('button', { className: 'send', ariaLabel: 'Send reply' }, svg('<path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/>')));
 }
 
+$('#postBody').oninput = e => $('#postCount').textContent = e.target.value.length > 4500 ? `${5000 - e.target.value.length} left` : '';
+$('#postBody').onkeydown = e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') $('#postForm').requestSubmit(); };
 $('#postForm').onsubmit = async e => {
   e.preventDefault();
   await api('post', { body: $('#postBody').value });
   $('#postBody').value = '';
+  $('#postCount').textContent = '';
+  toast('Posted. Thank you for trusting us with it.');
   loadFeed();
 };
 
 // TraumaMatch
 async function loadMatch() {
-  $('#tags').replaceChildren(...me.allTags.map(t => h('label', { className: 'chip' }, h('input', { type: 'checkbox', value: t, checked: me.tags.includes(t) }), t)));
+  $('#tags').replaceChildren(...me.allTags.map(t => h('label', { className: 'tag' }, h('input', { type: 'checkbox', value: t, checked: me.tags.includes(t) }), t)));
   $('#bio').value = me.bio;
-  const c = await api('next');
+  $('#myTags').textContent = me.tags.join(' · ') || 'Not set yet';
+  $('#story').open = !me.tags.length;
+  const c = me.tags.length ? await api('next') : null;
   $('#candidate').replaceChildren(
-    !me.tags.length ? h('p', { className: 'card meta' }, 'Pick at least one experience above and save to start matching.')
-    : !c ? h('p', { className: 'card meta' }, 'No new people who share your experiences yet. Check back soon.')
-    : h('div', { className: 'card' },
-        h('h3', {}, who(c.name, c.picture)),
-        h('div', {}, h('span', { className: 'meta' }, 'You both lived through: '), ...c.shared.map(t => h('span', { className: 'chip' }, t))),
-        h('p', { className: 'body' }, c.bio),
-        h('div', { className: 'row' },
-          h('button', { className: 'btn ghost', onclick: () => swipe(c, false) }, 'Pass'),
-          h('button', { className: 'btn', onclick: () => swipe(c, true) }, 'Connect'))));
+    !me.tags.length ? empty('Tell us a little of your story below,', 'and we’ll find people who share it.')
+    : !c ? empty('No one new shares your story yet.', 'Check back soon.')
+    : card(c));
 }
 
-async function swipe(c, liked) {
-  const { match } = await api('swipe', { to: c.id, liked });
-  if (match) toast(`You and ${c.name} matched. Say hi in Matches.`);
+function card(c) {
+  const el = h('article', { className: 'cand' },
+    avatar(c.name, c.picture, 112),
+    h('h3', {}, c.name),
+    h('p', { className: 'overline' }, 'You both survived'),
+    h('div', { className: 'shared' }, ...c.shared.map(t => h('span', { className: 'pill' }, t))),
+    c.bio ? h('blockquote', {}, c.bio) : '',
+    h('div', { className: 'choices' },
+      h('button', { className: 'round', onclick: () => swipe(el, c, false) }, h('i', {}, svg('<path d="M7 7l10 10M17 7 7 17"/>')), 'Pass'),
+      h('button', { className: 'round yes', onclick: () => swipe(el, c, true) }, h('i', {}, svg('<circle cx="9.5" cy="12" r="5"/><circle cx="14.5" cy="12" r="5"/>')), 'Connect')));
+  return el;
+}
+
+async function swipe(el, c, liked) {
+  el.inert = true;
+  el.classList.add(liked ? 'go-right' : 'go-left');
+  const [{ match }] = await Promise.all([api('swipe', { to: c.id, liked }), sleep(380)]);
+  if (match) celebrate(c);
   loadMatch();
+}
+
+function celebrate(c) {
+  const d = $('#matched');
+  $('#pair').replaceChildren(avatar(me.name, me.picture, 88), avatar(c.name, c.picture, 88));
+  $('#matchedText').textContent = `You and ${c.name} both chose to connect.`;
+  d.returnValue = '';
+  d.onclose = async () => { if (d.returnValue === 'hello') { await show('matches'); openThread(c); } };
+  d.showModal();
 }
 
 $('#profileForm').onsubmit = async e => {
@@ -219,20 +581,29 @@ $('#profileForm').onsubmit = async e => {
 // Matches + messages
 async function loadMatches() {
   const list = await api('matches');
-  $('#thread').hidden = true;
+  $('#inbox').className = list.length ? 'inbox' : 'inbox none';
+  $('#pick').hidden = false;
+  $('#conv').hidden = true;
   $('#matchList').replaceChildren(...list.length
-    ? list.map(m => h('button', { className: 'card', onclick: () => openThread(m) }, h('b', {}, who(m.name, m.picture)), h('p', { className: 'meta' }, m.tags.join(' · '))))
-    : [h('p', { className: 'card meta' }, 'No matches yet. When you and someone both tap Connect, they show up here.')]);
+    ? list.map(m => h('button', { className: 'match-item', matchId: m.id, onclick: () => openThread(m) },
+        avatar(m.name, m.picture, 46), h('span', {}, h('b', {}, m.name), h('small', {}, m.tags.join(' · ')))))
+    : [empty('No matches yet.', 'When you and someone both choose Connect, you’ll find each other here.')]);
 }
 
 async function openThread(m) {
   peer = m;
   const msgs = await api('messages?with=' + m.id);
-  $('#thread').hidden = false;
-  $('#threadName').textContent = m.name;
-  $('#msgs').replaceChildren(...msgs.map(x => h('p', { className: x.mine ? 'msg mine' : 'msg', title: when(x.created) }, x.body)));
-  if (!msgs.length) $('#msgs').append(h('p', { className: 'meta' }, 'Say hello. Be gentle, you both have been through something.'));
+  for (const b of $('#matchList').children) b.classList.toggle('on', b.matchId === m.id);
+  $('#inbox').classList.add('reading');
+  $('#pick').hidden = true;
+  $('#conv').hidden = false;
+  $('#threadWho').replaceChildren(avatar(m.name, m.picture, 34), h('b', {}, m.name));
+  $('#msgs').replaceChildren(...msgs.map(x => h('p', { className: x.mine ? 'msg mine' : 'msg', title: new Date(x.created).toLocaleString() }, x.body)));
+  if (!msgs.length) $('#msgs').append(h('p', { className: 'empty small' }, 'Say hello. Go gently, you’ve both been through something.'));
+  $('#msgs').scrollTop = $('#msgs').scrollHeight;
 }
+
+$('#back').onclick = () => $('#inbox').classList.remove('reading');
 
 $('#msgForm').onsubmit = async e => {
   e.preventDefault();
