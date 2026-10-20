@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TraumaDump</title>
+<meta name="description" content="A private place to share what happened, get support, and find people who have been through it too.">
+<style>
+  :root { --bg: #f6f4f1; --card: #fff; --text: #2b2a33; --muted: #6b6878; --accent: #6d4fc2; --line: #e4e0ea; --warn: #fff1cc; --chip: #efeaf9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17161c; --card: #22212a; --text: #ecebf2; --muted: #a19eb0; --accent: #a58cf0; --line: #363442; --warn: #3a3220; --chip: #2f2a40; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+  .crisis { background: var(--warn); padding: 8px 16px; text-align: center; font-size: 14px; }
+  .crisis a, a { color: inherit; }
+  header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 720px; margin: auto; padding: 16px; }
+  header h1 { font-size: 22px; margin: 0 auto 0 0; }
+  header h1 span { color: var(--accent); }
+  nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  nav button { background: none; border: 0; color: var(--muted); padding: 6px 10px; border-radius: 8px; }
+  nav button.on { color: var(--accent); background: var(--card); font-weight: 600; }
+  main { max-width: 720px; margin: auto; padding: 0 16px 64px; }
+  .card { display: block; width: 100%; text-align: left; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 12px 0; }
+  h2, h3 { margin: 0 0 8px; }
+  label { display: block; margin: 8px 0; }
+  textarea, input:not([type]), input[type=password] { display: block; width: 100%; margin-top: 4px; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  button { font: inherit; cursor: pointer; }
+  .btn { background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 10px; padding: 8px 18px; }
+  .btn.ghost { background: none; color: var(--accent); }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; font-size: 13px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .row input { margin: 0; flex: 1; }
+  .meta { color: var(--muted); font-size: 13px; margin: 0; }
+  .body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
+  .comment { border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
+  .comment p { margin: 2px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--chip); border-radius: 999px; padding: 4px 12px; margin: 4px 4px 0 0; font-size: 14px; }
+  .msg { max-width: 80%; width: fit-content; background: var(--chip); border-radius: 14px; padding: 6px 12px; margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .msg.mine { margin-left: auto; background: var(--accent); color: #fff; }
+  .error { color: #c0392b; min-height: 1.5em; margin: 4px 0; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 10px; max-width: calc(100% - 32px); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="crisis">In crisis right now? Call or text <a href="tel:988"><b>988</b></a> (US) or find a line in your country at <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>.</div>
+<header>
+  <h1>Trauma<span>Dump</span></h1>
+  <nav hidden>
+    <button data-view="feed">Dump</button>
+    <button data-view="match">TraumaMatch</button>
+    <button data-view="matches">Matches</button>
+    <button data-view="help">Help</button>
+    <button id="logout">Sign out</button>
+  </nav>
+</header>
+
+<main>
+  <section id="auth" hidden>
+    <form class="card" id="authForm">
+      <h2>A private place to let it out</h2>
+      <p class="meta">No email and no real name. Pick a username nobody can trace back to you. Only signed-in members can read anything here.</p>
+      <label>Username <input name="name" autocomplete="username" required></label>
+      <label>Password <input name="pass" type="password" autocomplete="current-password" required minlength="8"></label>
+      <p class="error" id="authError" role="alert"></p>
+      <div class="row">
+        <button class="btn" value="login">Sign in</button>
+        <button class="btn ghost" value="signup">Create account</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="feed" hidden>
+    <form class="card" id="postForm">
+      <label for="postBody"><b>What happened?</b> <span class="meta">Members see this under your username only. You can delete it any time.</span></label>
+      <textarea id="postBody" rows="4" maxlength="5000" required></textarea>
+      <div class="row"><button class="btn">Post</button></div>
+    </form>
+    <div id="posts"></div>
+  </section>
+
+  <section id="match" hidden>
+    <form class="card" id="profileForm">
+      <h3>What have you been through?</h3>
+      <p class="meta">TraumaMatch shows you people who share at least one of these. They see your username, your bio and the experiences you share.</p>
+      <div id="tags"></div>
+      <label>Short bio <textarea id="bio" rows="2" maxlength="300"></textarea></label>
+      <button class="btn">Save</button>
+    </form>
+    <div id="candidate"></div>
+  </section>
+
+  <section id="matches" hidden>
+    <div id="matchList"></div>
+    <div id="thread" class="card" hidden>
+      <div class="row"><h3 id="threadName" style="flex:1;margin:0"></h3><button class="link" id="unmatch">Unmatch</button></div>
+      <div id="msgs"></div>
+      <form id="msgForm" class="row"><input id="msgBody" maxlength="2000" required aria-label="Message"><button class="btn">Send</button></form>
+    </div>
+  </section>
+
+  <section id="help" hidden>
+    <div class="card">
+      <h2>Get help now</h2>
+      <p class="meta">TraumaDump is peer support, not therapy. These are free and confidential.</p>
+      <ul>
+        <li><b>988 Suicide &amp; Crisis Lifeline</b> (US): call or text <a href="tel:988">988</a></li>
+        <li><b>Crisis Text Line</b> (US): text HOME to <a href="sms:741741">741741</a></li>
+        <li><b>RAINN</b> sexual assault hotline (US): <a href="tel:18006564673">1-800-656-4673</a></li>
+        <li><b>NAMI HelpLine</b> (US): <a href="tel:18009506264">1-800-950-6264</a></li>
+        <li><b>Anywhere else</b>: <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></li>
+      </ul>
+      <p>If you are in immediate danger, call your local emergency number.</p>
+    </div>
+  </section>
+</main>
+<div id="toast" role="status" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const h = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const when = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+let me, peer;
+
+function toast(msg) {
+  Object.assign($('#toast'), { textContent: msg, hidden: false });
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => $('#toast').hidden = true, 4000);
+}
+addEventListener('unhandledrejection', e => e.reason?.message !== 'Please sign in' && toast(e.reason?.message ?? 'Something went wrong'));
+
+async function api(route, body) {
+  const r = await fetch('/api/' + route, body && { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await r.json();
+  if (r.status === 401) show('auth');
+  if (!r.ok) throw new Error(data.error);
+  return data;
+}
+
+function show(view) {
+  $('nav').hidden = view === 'auth';
+  for (const s of document.querySelectorAll('main > section')) s.hidden = s.id !== view;
+  for (const b of document.querySelectorAll('nav [data-view]')) b.classList.toggle('on', b.dataset.view === view);
+  ({ feed: loadFeed, match: loadMatch, matches: loadMatches })[view]?.();
+}
+
+async function start() {
+  me = await api('me');
+  show('feed');
+}
+
+for (const b of document.querySelectorAll('nav [data-view]')) b.onclick = () => show(b.dataset.view);
+$('#logout').onclick = () => api('logout', {}).then(() => show('auth'));
+
+$('#authForm').onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  try {
+    await api(e.submitter.value, { name: f.get('name'), pass: f.get('pass') });
+    e.target.reset();
+    $('#authError').textContent = '';
+    start();
+  } catch (err) { $('#authError').textContent = err.message; }
+};
+
+// Dump
+async function loadFeed() {
+  const posts = await api('posts');
+  $('#posts').replaceChildren(...posts.map(p => h('article', { className: 'card' },
+    h('div', { className: 'row' },
+      h('p', { className: 'meta', style: 'flex:1' }, `${p.name} · ${when(p.created)}`),
+      p.mine ? h('button', { className: 'link', onclick: () => confirm('Delete this post and its replies?') && api('delete', { post_id: p.id }).then(loadFeed) }, 'Delete') : ''),
+    h('p', { className: 'body' }, p.body),
+    ...p.comments.map(c => h('div', { className: 'comment' }, h('p', { className: 'meta' }, `${c.name} · ${when(c.created)}`), h('p', {}, c.body))),
+    commentForm(p.id))));
+  if (!posts.length) $('#posts').append(h('p', { className: 'card meta' }, 'Nothing here yet. You can be the first to share.'));
+}
+
+function commentForm(postId) {
+  const input = h('input', { placeholder: 'Say something supportive…', maxLength: 2000, required: true });
+  input.setAttribute('aria-label', 'Reply');
+  return h('form', { className: 'row', onsubmit: async e => {
+    e.preventDefault();
+    await api('comment', { post_id: postId, body: input.value });
+    loadFeed();
+  } }, input, h('button', { className: 'btn ghost' }, 'Reply'));
+}
+
+$('#postForm').onsubmit = async e => {
+  e.preventDefault();
+  await api('post', { body: $('#postBody').value });
+  $('#postBody').value = '';
+  loadFeed();
+};
+
+// TraumaMatch
+async function loadMatch() {
+  $('#tags').replaceChildren(...me.allTags.map(t => h('label', { className: 'chip' }, h('input', { type: 'checkbox', value: t, checked: me.tags.includes(t) }), t)));
+  $('#bio').value = me.bio;
+  const c = await api('next');
+  $('#candidate').replaceChildren(
+    !me.tags.length ? h('p', { className: 'card meta' }, 'Pick at least one experience above and save to start matching.')
+    : !c ? h('p', { className: 'card meta' }, 'No new people who share your experiences yet. Check back soon.')
+    : h('div', { className: 'card' },
+        h('h3', {}, c.name),
+        h('div', {}, h('span', { className: 'meta' }, 'You both lived through: '), ...c.shared.map(t => h('span', { className: 'chip' }, t))),
+        h('p', { className: 'body' }, c.bio),
+        h('div', { className: 'row' },
+          h('button', { className: 'btn ghost', onclick: () => swipe(c, false) }, 'Pass'),
+          h('button', { className: 'btn', onclick: () => swipe(c, true) }, 'Connect'))));
+}
+
+async function swipe(c, liked) {
+  const { match } = await api('swipe', { to: c.id, liked });
+  if (match) toast(`You and ${c.name} matched. Say hi in Matches.`);
+  loadMatch();
+}
+
+$('#profileForm').onsubmit = async e => {
+  e.preventDefault();
+  me = await api('profile', { tags: [...document.querySelectorAll('#tags :checked')].map(i => i.value), bio: $('#bio').value });
+  toast('Saved');
+  loadMatch();
+};
+
+// Matches + messages
+async function loadMatches() {
+  const list = await api('matches');
+  $('#thread').hidden = true;
+  $('#matchList').replaceChildren(...list.length
+    ? list.map(m => h('button', { className: 'card', onclick: () => openThread(m) }, h('b', {}, m.name), h('p', { className: 'meta' }, m.tags.join(' · '))))
+    : [h('p', { className: 'card meta' }, 'No matches yet. When you and someone both tap Connect, they show up here.')]);
+}
+
+async function openThread(m) {
+  peer = m;
+  const msgs = await api('messages?with=' + m.id);
+  $('#thread').hidden = false;
+  $('#threadName').textContent = m.name;
+  $('#msgs').replaceChildren(...msgs.map(x => h('p', { className: x.mine ? 'msg mine' : 'msg', title: when(x.created) }, x.body)));
+  if (!msgs.length) $('#msgs').append(h('p', { className: 'meta' }, 'Say hello. Be gentle, you both have been through something.'));
+}
+
+$('#msgForm').onsubmit = async e => {
+  e.preventDefault();
+  await api('message', { to: peer.id, body: $('#msgBody').value });
+  $('#msgBody').value = '';
+  openThread(peer);
+};
+
+$('#unmatch').onclick = async () => {
+  if (!confirm(`Unmatch ${peer.name}? Neither of you can send messages after this.`)) return;
+  await api('unmatch', { to: peer.id });
+  loadMatches();
+};
+
+start();
+</script>
+</body>
+</html>

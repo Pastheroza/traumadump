@@ -1,0 +1,12 @@
+{
+  "name": "traumadump",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db": "node --env-file=.env.local schema.mjs",
+    "test": "node --env-file=.env.local test.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0"
+  }
+}
